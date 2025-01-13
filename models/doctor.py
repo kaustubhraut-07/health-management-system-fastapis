@@ -1,7 +1,8 @@
 from pymongo import MongoClient
 from models.patient import Patient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 class doctor(BaseModel):
+    id: Optional[str] = Field(alias="_id")
     name: str
     mobileNo: str
     email: str
