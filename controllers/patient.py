@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from config.dbConnect import MongoDB
 from models.patient import Patient
 from typing import List
+from bson.objectid import ObjectId as objectId
+import json
 
 router = APIRouter()
 
@@ -38,12 +40,13 @@ async def update_patient(patient: Patient):
         
         update_data = patient.dict()
         # print(update_data , "update_data")
-        if "_id" not in update_data or not update_data["_id"]:
-            raise HTTPException(status_code=400, detail="Patient ID (_id) is required for updates")
-
-        patient_id = update_data.pop("_id")  
+        # if "_id" not in update_data or not update_data["_id"]:
+        #     raise HTTPException(status_code=400, detail="Patient ID (_id) is required for updates")
+        
+        print(update_data , "update_data")
+        patient_id = update_data['id'] 
         print(patient_id)
-        result = await patient_collection.update_one({"_id": patient_id}, {"$set": update_data})
+        result = await patient_collection.update_one({"_id": objectId(patient_id)}, {"$set": update_data})
 
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Patient not found")
@@ -57,7 +60,7 @@ async def update_patient(patient: Patient):
 async def delete_patient(patient_id: str):
     try:
         patient_collection = MongoDB.database["patients"]
-        result = await patient_collection.delete_one({"_id": patient_id})
+        result = await patient_collection.delete_one({"_id": objectId(patient_id)})
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Patient not found")
         return {"message": "Patient deleted successfully"}
