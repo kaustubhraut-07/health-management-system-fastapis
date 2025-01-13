@@ -4,6 +4,7 @@ from config.dbConnect import MongoDB
 from dotenv import load_dotenv
 import os
 from controllers.patient import router as patients_router
+from controllers.doctors import router as doctors_router
 
 app = FastAPI()
 
@@ -33,3 +34,4 @@ async def get_users():
 
 
 app.include_router(patients_router, prefix="/patients", tags=["patients"])
+app.include_router(doctors_router, prefix="/doctors", tags=["doctors"])
