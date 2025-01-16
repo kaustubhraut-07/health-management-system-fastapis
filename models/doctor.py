@@ -7,6 +7,7 @@ class doctor(BaseModel):
     name: str
     mobileNo: str
     email: str
+    password: str
     address : str
     specility : str
     experience : str
