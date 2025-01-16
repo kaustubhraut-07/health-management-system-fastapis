@@ -67,3 +67,42 @@ async def delete_patient(patient_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+# doctor appointment booking
+@router.post("/bookappointment", response_model=dict)
+async def book_appointment(appointment: dict):
+    try:
+        patient_collection = MongoDB.database["patients"]
+
+        if(not appointment.get('doctor_id') or not appointment.get('appointment_day') or not appointment.get('appointment_time')):
+            raise HTTPException(status_code=400, detail="Doctor ID and Appointment Date are required")
+        
+        result = await patient_collection.update_one({"_id": objectId(appointment['patient_id'])}, {"$push": {"appoints_data": appointment}})
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return {"message": "Appointment booked successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+# update appointment status of patinet
+@router.patch("/updateappointment_status", response_model=dict)
+async def update_appointment(appointment: dict):
+    try:
+        patient_collection = MongoDB.database["patients"]
+        # result = await patient_collection.update_one({"_id": objectId(appointment['patient_id'])}, {"$set": {"appoints_data.$[elem].appointment_status": appointment['appointment_status']}}, array_filters=[{"elem._id": objectId(appointment['doctor_id'])}])
+        result = await patient_collection.update_one(
+            {"_id": objectId(appointment['patient_id'])},  
+            {
+                "$set": {
+                    "appoints_data.$[elem].appointment_status": appointment['appointment_status']  
+                }
+            },
+            array_filters=[{"elem.doctor_id": appointment['doctor_id']}], 
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return {"message": "Appointment status updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    

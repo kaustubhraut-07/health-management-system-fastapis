@@ -62,7 +62,7 @@ async def doctor_login(doctor: doctor):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/", response_model=dict)
-async def update_doctor(doctor: doctor):
+async def update_doctor(doctor: doctor=Depends(get_current_user)):
     try:
         doctor_collection = MongoDB.database["doctors"]
         result = await doctor_collection.update_one({"_id": objectId(doctor.id)}, {"$set": doctor.dict()})

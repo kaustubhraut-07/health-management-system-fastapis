@@ -2,6 +2,16 @@ from pymongo import MongoClient
 from pydantic import BaseModel
 from typing import Optional
 from pydantic import Field
+from typing import List
+
+
+class Appointment(BaseModel):
+    appointment_day: Optional[str] = None
+    appointment_time: Optional[str] = None
+    appointment_status: Optional[str] = Field(default="pending")
+    doctor_id: Optional[str] = None
+
+
 class Patient(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")  #
     name : str
@@ -9,6 +19,9 @@ class Patient(BaseModel):
     address  : Optional[str] = None
     description : str
     consult_to_doctor : str
+    appoints_data: List[Appointment] = Field(default=[])
+   
+
 
  
 
