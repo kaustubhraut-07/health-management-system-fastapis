@@ -16,6 +16,7 @@ class Patient(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")  #
     name : str
     mobileNo : str
+    email : str
     address  : Optional[str] = None
     description : str
     consult_to_doctor : str
