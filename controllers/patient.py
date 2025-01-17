@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from config.dbConnect import MongoDB
-from config.mail import send_email_async 
+from config.mail import send_email_async , send_email_background
 from models.patient import Patient
 from typing import List
 from bson.objectid import ObjectId as objectId
 import json
+from fastapi import BackgroundTasks
 
 router = APIRouter()
 
@@ -67,23 +68,6 @@ async def delete_patient(patient_id: str):
         return {"message": "Patient deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-
-# doctor appointment booking
-# @router.post("/bookappointment", response_model=dict)
-# async def book_appointment(appointment: dict):
-#     try:
-#         patient_collection = MongoDB.database["patients"]
-
-#         if(not appointment.get('doctor_id') or not appointment.get('appointment_day') or not appointment.get('appointment_time')):
-#             raise HTTPException(status_code=400, detail="Doctor ID and Appointment Date are required")
-        
-#         result = await patient_collection.update_one({"_id": objectId(appointment['patient_id'])}, {"$push": {"appoints_data": appointment}})
-#         if result.modified_count == 0:
-#             raise HTTPException(status_code=404, detail="Patient not found")
-#         return {"message": "Appointment booked successfully"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
     
 
 @router.post("/bookappointment", response_model=dict)
