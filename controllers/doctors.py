@@ -118,3 +118,34 @@ async def get_all_appointments():
         return patients_details
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/get_appointments/{doctor_id}")
+async def get_appointments(doctor_id: str):
+    try:
+        doctor_collection = MongoDB.database["doctors"]
+        patients_collection = MongoDB.database["patients"]
+        
+        patients = await patients_collection.find().to_list(100)
+        doctors = await doctor_collection.find().to_list(100)
+        print(doctors)
+
+        patients_details = []
+
+        for patient in patients:
+            patient['_id'] = str(patient['_id'])
+            for appoint in patient.get('appoints_data', []):
+                appoint['doctor_id'] = str(appoint['doctor_id'])
+            
+            patient['appoints_data'].sort(
+                key=lambda x: any(objectId(x['doctor_id']) == doctor['_id'] for doctor in doctors),
+                reverse=True
+            )
+            patients_details.append(patient)
+
+        for doctor in doctors:
+            doctor['_id'] = str(doctor['_id'])
+
+        return patients_details
+    except Exception as e:
+        return {"message": "Doctor not found"}

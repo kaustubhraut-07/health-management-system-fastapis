@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,File, UploadFile
 from config.dbConnect import MongoDB
 from config.mail import send_email_async , send_email_background
 from models.patient import Patient
@@ -6,6 +6,9 @@ from typing import List
 from bson.objectid import ObjectId as objectId
 import json
 from fastapi import BackgroundTasks
+from pathlib import Path
+import shutil
+
 
 router = APIRouter()
 
@@ -137,14 +140,6 @@ async def update_appointment(appointment: dict):
     try:
         patient_collection = MongoDB.database["patients"]
 
-        # patient = await patient_collection.find_one({"_id": objectId(appointment['patient_id'])})
-        # if not patient or 'email' not in patient:
-        #     raise HTTPException(status_code=404, detail="Patient not found or email not provided")
-
-        # email_to = patient['email']
-        # await send_email_async("Appointment Status Update",email_to, "Your appointment status has been updated", )
-        
-        # result = await patient_collection.update_one({"_id": objectId(appointment['patient_id'])}, {"$set": {"appoints_data.$[elem].appointment_status": appointment['appointment_status']}}, array_filters=[{"elem._id": objectId(appointment['doctor_id'])}])
         result = await patient_collection.update_one(
             {"_id": objectId(appointment['patient_id'])},  
             {
@@ -160,3 +155,28 @@ async def update_appointment(appointment: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+
+@router.post("/upload_reports")
+async def upload_reports(patient_id: str, files: list[UploadFile], background_tasks: BackgroundTasks):
+    try:
+        patient_uploads_dir = Path("uploads") / patient_id
+        patient_uploads_dir.mkdir(parents=True, exist_ok=True)
+
+        file_paths = []
+        for file in files:
+            file_path = patient_uploads_dir / file.filename
+            file_paths.append(str(file_path))
+
+            file_content = await file.read()
+            
+            background_tasks.add_task(save_file, file_content, file_path)
+
+        return {"message": "Files uploaded successfully", "file_paths": file_paths}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def save_file(file_content: bytes, destination: Path):
+    with destination.open("wb") as buffer:
+        buffer.write(file_content)
