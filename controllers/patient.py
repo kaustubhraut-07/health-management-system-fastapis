@@ -103,8 +103,26 @@ async def book_appointment(appointment: dict):
 
         
         email_subject = "Appointment Confirmation"
-        email_body = f"Your appointment with Doctor has been successfully booked for {appointment['appointment_day']} at {appointment['appointment_time']}."
-        
+        # email_body = f"Your appointment with Doctor has been successfully booked for {appointment['appointment_day']} at {appointment['appointment_time']}."
+        email_body= f"""
+        <html>
+        <body style="margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif;">
+        <div style="width: 100%; background: #efefef; border-radius: 10px; padding: 10px;">
+          <div style="margin: 0 auto; width: 90%; text-align: center;">
+            <h1 style="background-color: rgba(0, 53, 102, 1); padding: 5px 10px; border-radius: 5px; color: white;">Appointment Confirmation</h1>
+            <div style="margin: 30px auto; background: white; width: 40%; border-radius: 10px; padding: 50px; text-align: center;">
+              <h3 style="margin-bottom: 100px; font-size: 24px;">{patient.get('name')}!</h3>
+              <p style="margin-bottom: 30px;">Your appointment with the doctor has been successfully booked.</p>
+              <p style="margin-bottom: 30px;"><strong>Appointment Date:</strong> {appointment['appointment_day']}</p>
+              <p style="margin-bottom: 30px;"><strong>Appointment Time:</strong> {appointment['appointment_time']}</p>
+             
+            </div>
+          </div>
+        </div>
+        </body>
+        </html>
+        """
+
 
         
         await send_email_async(subject=email_subject, email_to=email_to, body=email_body)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from config.dbConnect import MongoDB
 from models.doctor import doctor
+from models.patient import Patient
 from typing import List
 from bson.objectid import ObjectId as objectId
 from config.accesstoken import create_access_token
@@ -13,7 +14,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @router.get("/")
-async def get_all_doctors(current_user: doctor = Depends(get_current_user)):
+async def get_all_doctors(
+    # current_user: doctor = Depends(get_current_user)
+    ):
     try:
         doctor_collection = MongoDB.database["doctors"]
         doctors = await doctor_collection.find().to_list(100)
@@ -81,5 +84,37 @@ async def delete_doctor(doctor_id: str):
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Doctor not found")
         return {"message": "Doctor deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+@router.get("/get_all_appintments")
+async def get_all_appointments():
+    try:
+        doctor_collection = MongoDB.database["doctors"]
+        patients_collection = MongoDB.database["patients"]
+        
+        patients = await patients_collection.find().to_list(100)
+        doctors = await doctor_collection.find().to_list(100)
+        print(doctors)
+
+        patients_details = []
+
+        for patient in patients:
+            patient['_id'] = str(patient['_id'])
+            for appoint in patient.get('appoints_data', []):
+                appoint['doctor_id'] = str(appoint['doctor_id'])
+            
+            patient['appoints_data'].sort(
+                key=lambda x: any(objectId(x['doctor_id']) == doctor['_id'] for doctor in doctors),
+                reverse=True
+            )
+            patients_details.append(patient)
+
+        for doctor in doctors:
+            doctor['_id'] = str(doctor['_id'])
+
+        return patients_details
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
