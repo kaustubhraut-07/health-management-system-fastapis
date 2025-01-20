@@ -8,7 +8,10 @@ import json
 from fastapi import BackgroundTasks
 from pathlib import Path
 import shutil
-
+from fastapi_utilities import repeat_at
+import datetime
+from datetime import datetime, timedelta
+import asyncio
 
 router = APIRouter()
 
@@ -78,19 +81,19 @@ async def book_appointment(appointment: dict):
     try:
         patient_collection = MongoDB.database["patients"]
 
-        
+        await run_after_delay(Path("uploads"), days=10, delay_seconds=5)
         if not appointment.get('doctor_id') or not appointment.get('appointment_day') or not appointment.get('appointment_time'):
             raise HTTPException(status_code=400, detail="Doctor ID, Appointment Date, and Appointment Time are required")
 
         
         patient = await patient_collection.find_one({"_id": objectId(appointment['patient_id'])})
-        print(patient)
+        # print(patient)
         if not patient:
             raise HTTPException(status_code=404, detail="Patient not found")
 
       
         email_to = patient.get('email')
-        print(email_to)
+        # print(email_to)
         if not email_to or '@' not in email_to:
             raise HTTPException(status_code=400, detail="Patient email not found or invalid")
 
@@ -99,7 +102,7 @@ async def book_appointment(appointment: dict):
             {"_id": objectId(appointment['patient_id'])},
             {"$push": {"appoints_data": appointment}}
         )
-        print(result)
+        # print(result)
 
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Failed to book appointment")
@@ -162,6 +165,7 @@ async def upload_reports(patient_id: str, files: list[UploadFile], background_ta
     try:
         patient_uploads_dir = Path("uploads") / patient_id
         patient_uploads_dir.mkdir(parents=True, exist_ok=True)
+        
 
         file_paths = []
         for file in files:
@@ -180,3 +184,44 @@ async def upload_reports(patient_id: str, files: list[UploadFile], background_ta
 async def save_file(file_content: bytes, destination: Path):
     with destination.open("wb") as buffer:
         buffer.write(file_content)
+
+@repeat_at(cron="0 12 * * *") 
+def delete_old_files(folder_path: Path = Path("uploads"), days: int = 0.5):
+    """
+    Deletes files older than a specified number of days.
+    
+    Args:
+        folder_path (Path): Path to the folder containing files to delete.
+        days (int): The age of files (in days) to delete.
+    """
+    try:
+        cutoff_date = datetime.now() - timedelta(days=days)
+
+        for file_path in folder_path.iterdir():
+            if file_path.is_file():
+                file_modified_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+                if file_modified_time < cutoff_date:
+                    file_path.unlink()
+                    print(f"Deleted: {file_path}")
+                else:
+                    print(f"File not old enough: {file_path}")
+    except Exception as e:
+        print(f"Error occurred: {e}")
+
+
+async def run_after_delay(folder_path: Path, days: int = 10, delay_seconds: int = 30):
+    """
+    Run the delete_old_files function after a delay.
+    
+    Args:
+        folder_path (Path): Path to the folder containing files to delete.
+        days (int): The age of files (in days) to delete.
+        delay_seconds (int): Delay in seconds before running the function.
+    """
+    print(f"Current Time: {datetime.now()}")
+    print(f"Waiting for {delay_seconds} seconds to run the function...")
+    await asyncio.sleep(delay_seconds)
+    delete_old_files(folder_path, days)
+    print(f"Function executed at: {datetime.now()}")
+
+

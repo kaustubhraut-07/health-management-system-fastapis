@@ -33,5 +33,7 @@ async def get_users():
     return users
 
 
+
+
 app.include_router(patients_router, prefix="/patients", tags=["patients"])
 app.include_router(doctors_router, prefix="/doctors", tags=["doctors"])
