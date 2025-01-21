@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from config.dbConnect import MongoDB
-from models.doctor import doctor
+from models.doctor import doctor,DoctorLogin
 from models.patient import Patient
 from typing import List
 from bson.objectid import ObjectId as objectId
@@ -43,7 +43,7 @@ async def create_doctor(doctor: doctor):
 
 
 @router.post("/doctorlogin", response_model=dict)
-async def doctor_login(doctor: doctor):
+async def doctor_login(doctor: DoctorLogin):
     try:
         
         doctor_collection = MongoDB.database["doctors"]
