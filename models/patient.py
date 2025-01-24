@@ -19,7 +19,7 @@ class Patient(BaseModel):
     email : str
     address  : Optional[str] = None
     description : str
-    consult_to_doctor : str
+    consult_to_doctor : Optional[str] = None
     appoints_data: List[Appointment] = Field(default=[])
    
 
